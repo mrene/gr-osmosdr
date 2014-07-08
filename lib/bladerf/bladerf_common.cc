@@ -387,7 +387,13 @@ void bladerf_common::init(dict_t &dict, bladerf_module module)
 osmosdr::freq_range_t bladerf_common::freq_range()
 {
   /* assuming the same for RX & TX */
-  return osmosdr::freq_range_t( 300e6, 3.8e9 );
+  bladerf_xb xb;
+  unsigned long min = BLADERF_FREQUENCY_MIN;
+
+  if (_dev && bladerf_expansion_get_attached(_dev.get(), &xb) == 0 && xb == BLADERF_XB_200) {
+    min = BLADERF_FREQUENCY_MIN_XB200;
+  }
+  return osmosdr::freq_range_t( min, BLADERF_FREQUENCY_MAX );
 }
 
 osmosdr::meta_range_t bladerf_common::sample_rates()
