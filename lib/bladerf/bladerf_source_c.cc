@@ -389,12 +389,19 @@ double bladerf_source_c::get_gain( const std::string & name, size_t chan )
 double bladerf_source_c::set_bb_gain( double gain, size_t chan )
 {
   /* TODO: for RX, we should combine VGA1 & VGA2 which both are in BB path */
-  osmosdr::gain_range_t bb_gains = get_gain_range( "VGA2", chan );
 
-  double clip_gain = bb_gains.clip( gain, true );
-  gain = set_gain( clip_gain, "VGA2", chan );
+  osmosdr::gain_range_t bb_gain_vga1 = get_gain_range( "VGA1", chan );
+  osmosdr::gain_range_t bb_gain_vga2 = get_gain_range( "VGA2", chan );
 
-  return gain;
+  double clip_gain = bb_gain_vga1.clip( gain, true );
+  double total_gain = set_gain( clip_gain, "VGA1", chan );
+
+  if ((gain - clip_gain) > 0.1) {
+    clip_gain = bb_gain_vga2.clip( gain - clip_gain );
+    total_gain += set_gain( clip_gain, "VGA2", chan );
+  }
+
+  return total_gain;
 }
 
 std::vector< std::string > bladerf_source_c::get_antennas( size_t chan )
